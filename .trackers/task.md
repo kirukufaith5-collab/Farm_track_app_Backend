@@ -1,16 +1,22 @@
 # Current Task
 
-**Task name:** Harden duplicate email registration check  
-**Goal:** Ensure registration rejects duplicate emails reliably (case-insensitive + race-safe).
+**Task name:** Duplicate phone number check on registration  
+**Goal:** Reject registration when the phone number is already in use.
 
-## Approved scope
+## Changes
 
-- [x] Normalize email to lowercase before lookup and insert
-- [x] Return 409 Conflict with clear message
-- [x] Catch IntegrityError on commit for concurrent registrations
+- [x] Application-level phone uniqueness check (409)
+- [x] `phone` column marked `unique=True` on the User model
+- [x] IntegrityError handler distinguishes email vs phone collisions
 - [ ] Merge to `dev`, PR to `main`
 
-## Explicitly out of scope
+## Note for local Docker
 
-- Duplicate phone checks
-- Frontend changes
+`create_all` does not alter existing tables. If the DB volume was created before this change, either:
+
+```bash
+docker compose down -v   # wipes local data
+docker compose up --build
+```
+
+or add a unique index manually. Fresh installs pick up the constraint automatically.
