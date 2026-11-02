@@ -1,52 +1,51 @@
 # Current Task
 
-**Task name:** Backend bootstrap + FastAPI foundation  
-**Goal:** Replace Firebase Auth + Firestore with a FastAPI + PostgreSQL (PostGIS) backend that supports the existing FarmTrack frontend features, using JWT in HTTP-only cookies.
+**Task name:** FastAPI + PostGIS foundation (Phase 1)  
+**Goal:** Replace Firebase Auth + Firestore with FastAPI + PostgreSQL (PostGIS), JWT in HTTP-only cookies, registration with email + phone.
 
 ## Approved scope
 
-### Phase 0 – Bootstrap (this PR)
-- [x] Initial repository structure
-- [x] `.gitignore`, `README.md`
-- [x] `.trackers/` (repo-state, task, rollback)
-- [ ] Create `dev` branch after this lands on `main`
-- [ ] Establish topic-branch → `dev` → PR to `main` workflow
+### Phase 0 – Bootstrap
+- [x] Done (PR #1 merged)
 
-### Phase 1 – Backend foundation (subsequent PRs)
-- FastAPI project at repository root
-- PostgreSQL + PostGIS via Docker Compose
-- Alembic migrations
-- User model with email + phone number (registration collects both)
-- JWT authentication via HTTP-only cookies (access + refresh)
-- `fields` CRUD API matching frontend data model
-- CORS configured for Vercel frontend origin
-- Health endpoint
-- `.env.example`, Dockerfile, docker-compose.yml
-- Render-ready configuration
+### Phase 1 – Backend foundation (this branch)
+- [x] FastAPI project at repository root
+- [x] PostgreSQL + PostGIS via Docker Compose
+- [x] Alembic scaffolding
+- [x] User model (email, phone, password, full_name)
+- [x] JWT authentication via HTTP-only cookies (access + refresh)
+- [x] `fields` CRUD with PostGIS polygons
+- [x] CORS with credentials for Vercel
+- [x] Health endpoint
+- [x] `.env.example`, Dockerfile, docker-compose.yml
+- [x] README
 
 ## Explicitly out of scope (for now)
 
 - WebSockets / real-time push
 - File / image uploads
-- Admin roles / multi-tenancy beyond per-user ownership
-- Email verification / password reset flows (can be added later)
-- Frontend changes (handled in the frontend repository)
+- Admin roles
+- Email verification / password reset
+- Frontend changes
+- Production Render deployment (config ready, deploy later)
 
 ## Decisions made
 
-- Layout: repository root (no `backend/` subfolder)
-- Resource name: `fields` (matches frontend)
-- Auth: email + password; registration also collects phone number
+- Layout: repository root
+- Resource name: `fields`
+- Auth: email + password; registration also collects phone
 - Token delivery: JWT in HTTP-only cookies
 - Deployment target: Render
 - Workflow: topic branch → `dev` → PR to `main`
 
-## Decisions still required
+## Remaining / follow-ups
 
-- Exact cookie names, SameSite, Secure, domain settings for Vercel ↔ Render
-- Preferred access/refresh token lifetimes
-- Whether phone number is required or optional at registration
+- Create initial Alembic migration after first successful local run
+- Confirm cookie SameSite/Secure values for production Vercel ↔ Render
+- Frontend migration off Firebase (separate repo/task)
+- Phone number: currently required at registration
 
 ## Risks
 
-- CORS + cookie settings across Vercel (frontend) and Render (backend) need care (SameSite=None; Secure)
+- Cross-origin cookies (Vercel ↔ Render) require Secure + SameSite=None
+- create_all used in development; production should rely on Alembic only

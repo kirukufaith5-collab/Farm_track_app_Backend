@@ -1,10 +1,10 @@
 # Rollback
 
-**Previous known-good commit:** 7efadbc (test .gitkeep only)  
+**Previous known-good commit:** e94532d (merge of bootstrap PR #1)  
 **Previous release/tag:** none  
 
 ## Recovery notes
 
-- This bootstrap only adds documentation and tracking files. No runtime code or database.
-- To abandon: revert the merge commit of this PR on `main`.
-- After Phase 1: document migration rollback and database restore procedures here.
+- This Phase 1 introduces the full application code but no production database yet.
+- To roll back before any Render deploy: revert the merge commit of the Phase 1 PR on `main` / `dev`.
+- After a production database exists: document `alembic downgrade` steps and backup restore here.
