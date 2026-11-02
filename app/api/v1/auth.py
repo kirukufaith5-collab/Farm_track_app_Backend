@@ -24,17 +24,23 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def register(payload: UserRegister, session: SessionDep, response: Response):
     email = payload.email.lower().strip()
+    phone = payload.phone  # already normalized by schema validator
 
-    existing = session.exec(select(User).where(User.email == email)).first()
-    if existing:
+    if session.exec(select(User).where(User.email == email)).first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered",
         )
 
+    if session.exec(select(User).where(User.phone == phone)).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Phone number already registered",
+        )
+
     user = User(
         email=email,
-        phone=payload.phone,
+        phone=phone,
         full_name=payload.full_name,
         hashed_password=hash_password(payload.password),
     )
@@ -43,10 +49,20 @@ def register(payload: UserRegister, session: SessionDep, response: Response):
         session.commit()
     except IntegrityError:
         session.rollback()
-        # Race: another request registered the same email between our check and commit
+        # Concurrent registration race — identify which field collided
+        if session.exec(select(User).where(User.email == email)).first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already registered",
+            )
+        if session.exec(select(User).where(User.phone == phone)).first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Phone number already registered",
+            )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Email already registered",
+            detail="Account already exists",
         )
     session.refresh(user)
 

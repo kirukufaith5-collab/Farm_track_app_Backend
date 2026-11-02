@@ -17,7 +17,7 @@ class User(SQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     email: str = Field(unique=True, index=True, max_length=320)
-    phone: str = Field(index=True, max_length=32)
+    phone: str = Field(unique=True, index=True, max_length=32)
     full_name: Optional[str] = Field(default=None, max_length=200)
     hashed_password: str
     is_active: bool = Field(default=True)
