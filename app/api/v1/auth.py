@@ -1,8 +1,7 @@
-from datetime import datetime, timezone
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -24,7 +23,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def register(payload: UserRegister, session: SessionDep, response: Response):
-    existing = session.exec(select(User).where(User.email == payload.email)).first()
+    email = payload.email.lower().strip()
+
+    existing = session.exec(select(User).where(User.email == email)).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -32,13 +33,21 @@ def register(payload: UserRegister, session: SessionDep, response: Response):
         )
 
     user = User(
-        email=payload.email.lower().strip(),
+        email=email,
         phone=payload.phone,
         full_name=payload.full_name,
         hashed_password=hash_password(payload.password),
     )
     session.add(user)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        # Race: another request registered the same email between our check and commit
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
     session.refresh(user)
 
     access = create_access_token(str(user.id))
